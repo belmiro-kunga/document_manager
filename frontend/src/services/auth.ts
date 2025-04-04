@@ -2,7 +2,7 @@ import axios from 'axios';
 import { LoginCredentials, AuthResponse } from '../types/auth';
 
 const api = axios.create({
-  baseURL: 'http://localhost:8000/api/v1',
+  baseURL: 'http://localhost:8000',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -15,22 +15,34 @@ export const authService = {
       const formData = new URLSearchParams();
       formData.append('username', credentials.email); // FastAPI OAuth2 espera 'username'
       formData.append('password', credentials.password);
-      formData.append('grant_type', 'password');
 
-      const response = await api.post<AuthResponse>('/auth/login', formData, {
+      const response = await api.post<AuthResponse>('/token', formData, {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
       });
 
+      // Buscar informações do usuário
+      const userResponse = await api.get('/users/me', {
+        headers: {
+          'Authorization': `Bearer ${response.data.access_token}`
+        }
+      });
+
+      const authResponse: AuthResponse = {
+        access_token: response.data.access_token,
+        token_type: response.data.token_type,
+        user: userResponse.data
+      };
+
       if (credentials.remember) {
-        localStorage.setItem('token', response.data.access_token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
+        localStorage.setItem('token', authResponse.access_token);
+        localStorage.setItem('user', JSON.stringify(authResponse.user));
       } else {
-        sessionStorage.setItem('token', response.data.access_token);
-        sessionStorage.setItem('user', JSON.stringify(response.data.user));
+        sessionStorage.setItem('token', authResponse.access_token);
+        sessionStorage.setItem('user', JSON.stringify(authResponse.user));
       }
-      return response.data;
+      return authResponse;
     } catch (error: any) {
       console.error('Erro no login:', error.response?.data);
       throw error;

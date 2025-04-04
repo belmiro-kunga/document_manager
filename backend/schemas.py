@@ -4,33 +4,28 @@ from datetime import datetime
 
 class UserBase(BaseModel):
     email: EmailStr
-    username: str
-    is_active: Optional[bool] = True
-    is_superuser: Optional[bool] = False
+    full_name: str
 
 class UserCreate(UserBase):
     password: str
 
-class UserUpdate(UserBase):
-    password: Optional[str] = None
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
 
-class UserInDBBase(UserBase):
-    id: str
+class User(UserBase):
+    id: int
+    is_active: bool
+    is_superuser: bool
     created_at: datetime
     updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
 
-class User(UserInDBBase):
-    pass
-
-class UserInDB(UserInDBBase):
-    hashed_password: str
-
 class Token(BaseModel):
     access_token: str
     token_type: str
 
-class TokenPayload(BaseModel):
-    sub: str 
+class TokenData(BaseModel):
+    email: Optional[str] = None 
